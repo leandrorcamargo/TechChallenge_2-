@@ -11,10 +11,12 @@ env/
 .ipynb_checkpoints/
 
 # Dados locais
+# Obs: a pasta data/ É versionada (dados baixados em formato comprimido).
+# Ignoramos apenas dados descompactados/derivados para nao inchar o repo.
 *.parquet
-*.csv
-data/
 *.db
+data/**/*.csv
+!data/*.csv.gz
 
 # Credenciais / segredos
 .env

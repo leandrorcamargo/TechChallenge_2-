@@ -47,14 +47,21 @@ Construir uma pipeline de dados escalável em nuvem que realize:
 
 ## 🗂️ Fontes de Dados
 
-A pipeline integra as seguintes entidades, obtidas a partir da plataforma **Base dos Dados**:
+A pipeline integra as seguintes entidades, originadas das avaliações de
+alfabetização do **INEP**. Os arquivos brutos baixados ficam versionados na pasta
+[`data/`](data/) no formato comprimido (`.csv.gz` / `.zip`):
 
-- UF
-- Meta Alfabetização Brasil
-- Meta Alfabetização por UF
-- Meta Alfabetização por Município
-- Município
-- Dados de alunos
+| Entidade | Arquivo em `data/` | Formato |
+|----------|--------------------|---------|
+| UF | `br_inep_avaliacao_alfabetizacao_uf.csv.gz` | CSV (gzip) |
+| Município | `br_inep_avaliacao_alfabetizacao_municipio.csv.gz` | CSV (gzip) |
+| Meta Alfabetização Brasil | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_brasil.csv.gz` | CSV (gzip) |
+| Meta Alfabetização por UF | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_uf.csv.gz` | CSV (gzip) |
+| Meta Alfabetização por Município | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_municipio.csv.gz` | CSV (gzip) |
+| Dados de alunos (microdados) | `microdados_avaliacao_da_alfabetizacao_2023.zip`, `microdados_avaliacao_da_alfabetizacao_2024.zip`, `microdados_AEEB_2025.zip` | ZIP |
+
+> Os microdados (`microdados_*.zip`) contêm as tabelas `TS_ALUNO`, `TS_MUNICIPIO`,
+> `TS_ESTADO` e `TS_ITEM`, além de dicionários e scripts de leitura (R / SAS / SPSS).
 
 ### Fontes externas (opcional – enriquecimento)
 
@@ -141,13 +148,18 @@ A camada Gold poderá ser usada para:
 
 ```
 TechChallenge_2/
-├── bronze/        # Ingestão de dados brutos
-├── silver/        # Tratamento, padronização e integração
-├── gold/          # Camada analítica
-├── quality/       # Scripts de validação e qualidade de dados
-├── docs/          # Documentação técnica e diagramas
-└── README.md      # Documentação da solução
+├── data/              # Dados brutos baixados das fontes (comprimidos: .csv.gz / .zip)
+├── projeto/           # Código e artefatos da pipeline
+│   ├── bronze/        # Ingestão de dados brutos
+│   ├── silver/        # Tratamento, padronização e integração
+│   ├── gold/          # Camada analítica
+│   ├── quality/       # Scripts de validação e qualidade de dados
+│   └── docs/          # Documentação técnica e diagramas
+└── README.md          # Documentação da solução
 ```
+
+> A separação entre [`data/`](data/) (dados de entrada) e [`projeto/`](projeto/)
+> (código da pipeline) mantém os dados baixados isolados da lógica de processamento.
 
 ---
 
@@ -160,7 +172,12 @@ TechChallenge_2/
 
 ## 👥 Equipe
 
-> _A definir._
+| Integrante | Contato |
+|------------|---------|
+| Isabelle Nicole Santana de Brito | isabelle_nicole@outlook.com |
+| Filipe Noberto Justino | justinofilipe03@hotmail.com |
+| Leandro Rebes Camargo | leandrorcamargo@hotmail.com |
+| Felipe Vieira Sanches | fvieirasanches@gmail.com |
 
 ---
 
