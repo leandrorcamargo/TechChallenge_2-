@@ -18,6 +18,24 @@ env/
 data/**/*.csv
 !data/*.csv.gz
 
+# Data lake local (mirror do S3 gerado pelos jobs) - nao versionar
+lake/
+
+# Spark / PySpark
+spark-warehouse/
+metastore_db/
+derby.log
+*.crc
+_SUCCESS
+
+# Terraform (infra/)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
 # Credenciais / segredos
 .env
 *.key

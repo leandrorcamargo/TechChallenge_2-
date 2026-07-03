@@ -1,0 +1,75 @@
+# ==================================================================
+# Configuração central da pipeline (batch + streaming)
+# Valores sensíveis (conta AWS, credenciais) ficam em .env, NÃO aqui.
+# Alterne o ambiente de execução com a variável APP_ENV (local | aws).
+# ==================================================================
+
+project:
+  name: tech-challenge-fase2-alfabetizacao
+  owner: grupo-postech
+  region: us-east-1
+
+# ---- Ambiente de execução ----------------------------------------
+# local -> lê data/ e escreve em lake/ (Parquet) sem custo de nuvem
+# aws   -> lê/escreve em s3:// e usa Glue Catalog / Kinesis
+env: ${APP_ENV:-local}
+
+# ---- Camadas do data lake (medalhão) -----------------------------
+# Em local, {base} = ../lake ; em aws, {base} = s3://<bucket>
+lake:
+  local_base: ../lake
+  s3_bucket: ${S3_BUCKET:-tc2-alfabetizacao-datalake}
+  layers:
+    raw: raw          # landing dos arquivos brutos (mirror de data/)
+    bronze: bronze    # Parquet bruto, particionado, histórico preservado
+    silver: silver    # limpo, padronizado, integrado
+    gold: gold        # datasets analíticos prontos para BI/ML
+  # Formato e particionamento padrão (decisões de FinOps)
+  format: parquet
+  compression: snappy
+  partition_keys: [ano]
+
+# ---- Fontes de dados (arquivos em data/) -------------------------
+sources:
+  base_dos_dados:
+    uf: br_inep_avaliacao_alfabetizacao_uf.csv.gz
+    municipio: br_inep_avaliacao_alfabetizacao_municipio.csv.gz
+    meta_brasil: br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_brasil.csv.gz
+    meta_uf: br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_uf.csv.gz
+    meta_municipio: br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_municipio.csv.gz
+  microdados:
+    # Cada zip contém DADOS/TS_ALUNO.csv, TS_MUNICIPIO.csv, TS_ESTADO.csv, TS_ITEM.csv
+    zips:
+      - microdados_avaliacao_da_alfabetizacao_2023.zip
+      - microdados_avaliacao_da_alfabetizacao_2024.zip
+      - microdados_AEEB_2025.zip
+    tables: [TS_ALUNO, TS_MUNICIPIO, TS_ESTADO, TS_ITEM]
+    csv_sep: ";"
+    encoding: latin1
+
+# ---- Regra de negócio: corte de alfabetização --------------------
+business:
+  # Ponto de corte Saeb (Pesquisa Alfabetiza Brasil / INEP 2023)
+  proficiencia_corte: 743
+  meta_ano_alvo: 2030
+
+# ---- Streaming (Kinesis) -----------------------------------------
+streaming:
+  stream_name: ${KINESIS_STREAM:-tc2-alfabetizacao-eventos}
+  shard_count: 1
+  # fonte dos eventos simulados (novas medições de aluno)
+  source_table: TS_ALUNO
+  batch_size: 100          # eventos por micro-lote do producer
+  throttle_seconds: 1.0    # intervalo entre micro-lotes
+
+# ---- Observabilidade (CloudWatch) --------------------------------
+monitoring:
+  namespace: TC2/Alfabetizacao
+  log_group: /tc2/alfabetizacao/pipeline
+  sns_topic: ${SNS_TOPIC:-tc2-alfabetizacao-alertas}
+
+# ---- Catálogo / consulta (Glue + Athena) -------------------------
+catalog:
+  glue_database: tc2_alfabetizacao
+  athena_workgroup: tc2-alfabetizacao
+  athena_output: ${ATHENA_OUTPUT:-s3://tc2-alfabetizacao-datalake/athena-results/}
