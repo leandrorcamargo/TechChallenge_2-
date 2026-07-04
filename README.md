@@ -76,16 +76,61 @@ alfabetização do **INEP**. Os arquivos brutos baixados ficam versionados na pa
 
 ---
 
-## 🏗️ Arquitetura Esperada
+## 🏗️ Arquitetura da Solução
 
-Arquitetura híbrida moderna, seguindo a **Arquitetura Medalhão**.
+Arquitetura híbrida (**batch + streaming**) na **AWS**, seguindo a **Arquitetura Medalhão**.
+Documentação detalhada, com todos os diagramas, modelo de dados e trade-offs, em
+[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md).
+
+```mermaid
+flowchart LR
+    subgraph SRC["Fontes (data/)"]
+        A1["Base dos Dados<br/>5 CSV .gz"]
+        A2["Microdados INEP<br/>TS_ALUNO 2023-2025"]
+    end
+    subgraph ING["Ingestão híbrida"]
+        B1["Batch<br/>AWS Glue (PySpark)"]
+        B2["Streaming event-driven<br/>S3 Event → Kinesis"]
+    end
+    subgraph LAKE["Data Lake — S3 + Glue Catalog"]
+        C1["🥉 Bronze"] --> C2["🥈 Silver"] --> C3["🥇 Gold"]
+    end
+    subgraph CONS["Consumo"]
+        D1["Athena"]
+        D2["Notebook IA"]
+        D3["Dashboards"]
+    end
+    A1 --> B1
+    A2 --> B1
+    B1 --> C1
+    A2 -. novo arquivo raw (S3 event) .-> B2
+    B2 --> C1
+    C3 --> D1 & D2 & D3
+    MON["📈 CloudWatch + SNS"]
+    B1 -. métricas .-> MON
+    B2 -. métricas .-> MON
+```
+
+### Stack AWS
+
+| Função | Serviço |
+|--------|---------|
+| Data lake (raw/bronze/silver/gold) | Amazon S3 |
+| Processamento batch | AWS Glue (PySpark) |
+| Catálogo de metadados | AWS Glue Data Catalog |
+| Ingestão streaming | Amazon Kinesis Data Streams |
+| Consulta analítica | Amazon Athena |
+| Orquestração | Step Functions + EventBridge |
+| Observabilidade | Amazon CloudWatch + SNS |
+| Infra como código | Terraform |
 
 ### Ingestão Híbrida
 
 - **Batch** — processamento periódico de dados históricos (metas educacionais,
   municípios, dados agregados nacionais).
-- **Streaming** — simulação de ingestão de eventos em tempo quase real (atualização
-  de indicadores, novas medições de desempenho, atualização de metas/resultados).
+- **Streaming (event-driven)** — reage a mudanças nos dados raw: um evento
+  `s3:ObjectCreated` dispara a publicação dos novos registros no Kinesis e a atualização
+  incremental do indicador.
 
 ### Camadas Medalhão
 
@@ -150,10 +195,15 @@ A camada Gold poderá ser usada para:
 TechChallenge_2/
 ├── data/              # Dados brutos baixados das fontes (comprimidos: .csv.gz / .zip)
 ├── projeto/           # Código e artefatos da pipeline
+│   ├── common/        # Config, SparkSession, logging, I/O (local/S3)
+│   ├── config/        # settings.yaml + .env.example
 │   ├── bronze/        # Ingestão de dados brutos
 │   ├── silver/        # Tratamento, padronização e integração
-│   ├── gold/          # Camada analítica
+│   ├── gold/          # Camada analítica (+ notebook de IA)
 │   ├── quality/       # Scripts de validação e qualidade de dados
+│   ├── streaming/     # Producer/consumer Kinesis
+│   ├── orchestration/ # Orquestração da pipeline
+│   ├── infra/         # Terraform (S3, Glue, Kinesis, CloudWatch)
 │   └── docs/          # Documentação técnica e diagramas
 └── README.md          # Documentação da solução
 ```
@@ -165,8 +215,12 @@ TechChallenge_2/
 
 ## 🚀 Tecnologias
 
-> _A definir conforme o ambiente de nuvem escolhido (ferramentas e justificativas
-> serão documentadas ao longo do desenvolvimento)._
+Stack principal na **AWS**: **S3** (data lake), **AWS Glue / PySpark** (processamento),
+**Glue Data Catalog + Athena** (catálogo e consulta), **Kinesis Data Streams** (streaming),
+**CloudWatch + SNS** (observabilidade) e **Terraform** (infra como código).
+
+As justificativas de cada escolha estão detalhadas em
+[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md#7-tecnologias-e-justificativas).
 
 ---
 

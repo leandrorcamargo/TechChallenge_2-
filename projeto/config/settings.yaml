@@ -53,14 +53,17 @@ business:
   proficiencia_corte: 743
   meta_ano_alvo: 2030
 
-# ---- Streaming (Kinesis) -----------------------------------------
+# ---- Streaming (event-driven, Kinesis) ---------------------------
+# O fluxo é disparado por mudança real no raw (s3:ObjectCreated).
 streaming:
   stream_name: ${KINESIS_STREAM:-tc2-alfabetizacao-eventos}
   shard_count: 1
-  # fonte dos eventos simulados (novas medições de aluno)
+  # prefixo do raw observado por S3 Event Notification / EventBridge
+  trigger_prefix: raw/microdados/
+  # tabela cujas novas medições reais viram eventos ao chegarem
   source_table: TS_ALUNO
-  batch_size: 100          # eventos por micro-lote do producer
-  throttle_seconds: 1.0    # intervalo entre micro-lotes
+  # registros por PutRecords que a Lambda produtora publica ao ler o delta
+  publish_batch_size: 500
 
 # ---- Observabilidade (CloudWatch) --------------------------------
 monitoring:
