@@ -1,0 +1,30 @@
+# Copie para terraform.tfvars e ajuste. (terraform.tfvars é ignorado no Git.)
+
+project_name = "tc2-alfabetizacao"
+environment  = "dev"
+region       = "us-east-1"
+
+# ATENÇÃO: o nome do bucket precisa ser GLOBALMENTE único na AWS.
+# Sugestão: acrescente um sufixo (iniciais do grupo, número, etc.).
+datalake_bucket_name = "tc2-alfabetizacao-datalake"
+
+# Streaming
+kinesis_shard_count     = 1
+kinesis_retention_hours = 24
+trigger_prefix          = "raw/microdados/"
+
+# Glue (FinOps: manter workers baixos em dev)
+glue_version           = "4.0"
+glue_worker_type       = "G.1X"
+glue_number_of_workers = 2
+
+# Athena (teto de scan por query, em bytes: 1 GB)
+athena_bytes_scanned_cutoff = 1073741824
+
+# Observabilidade
+log_retention_days = 14
+# alert_email = "grupo@exemplo.com"   # descomente para receber alertas por e-mail
+
+tags = {
+  Team = "postech-grupo"
+}

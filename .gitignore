@@ -30,11 +30,13 @@ _SUCCESS
 
 # Terraform (infra/)
 .terraform/
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
 crash.log
+projeto/infra/build/
 
 # Credenciais / segredos
 .env
