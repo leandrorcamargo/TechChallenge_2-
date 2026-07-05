@@ -43,3 +43,23 @@ cp projeto/config/.env.example projeto/config/.env
 
 As convenções de camadas, particionamento e nomenclatura estão em
 [`docs/convencoes.md`](docs/convencoes.md).
+
+## Executando a camada Bronze (C4)
+
+A partir da pasta `projeto/`, com `APP_ENV=local`:
+
+```bash
+# 1. Landing: popula a zona raw/ (copia .csv.gz e extrai TS_* dos zips)
+python bronze/landing.py
+
+# 2. Bronze: converte raw/ -> bronze/ (Parquet particionado por ano)
+python bronze/bronze_ingest.py
+```
+
+O resultado fica em `lake/raw/` e `lake/bronze/<tabela>/ano=<ano>/` (ambos gitignorados).
+
+> **Pré-requisitos do PySpark local (Windows):** ter um **JDK 11 ou 17** e apontar
+> `JAVA_HOME` para ele (ex.: `C:\Program Files\Java\jdk-17`). Se houver um `SPARK_HOME`
+> inválido no ambiente, defina-o para o diretório do PySpark do seu venv/conda
+> (`.../site-packages/pyspark`) ou remova a variável. No AWS Glue nada disso é
+> necessário — o ambiente Spark já vem pronto.

@@ -44,6 +44,8 @@ sources:
       - microdados_avaliacao_da_alfabetizacao_2024.zip
       - microdados_AEEB_2025.zip
     tables: [TS_ALUNO, TS_MUNICIPIO, TS_ESTADO, TS_ITEM]
+    # Tabelas efetivamente ingeridas na Bronze (TS_ITEM excluído: respostas por item/TRI).
+    bronze_tables: [TS_ALUNO, TS_MUNICIPIO, TS_ESTADO]
     csv_sep: ";"
     encoding: latin1
 
