@@ -6,9 +6,8 @@ transformações TÉCNICAS acordadas (nenhuma regra de negócio):
 1. Converte CSV(.gz)/CSV → Parquet + snappy.
 2. Lê **todas as colunas como STRING** (fidelidade máxima; nomes originais preservados).
 3. Adiciona metadados: ``_ingestion_ts``, ``_ingestion_run_id``, ``_source_file``, ``_source_year``.
-4. Modo ``PERMISSIVE`` + coluna ``_corrupt_record`` (nenhuma linha é descartada).
-5. Une os anos dos microdados por tabela.
-6. Particiona por ``ano`` (nativo na Base dos Dados; derivado do ano do arquivo nos microdados).
+4. Une os anos dos microdados por tabela.
+5. Particiona por ``ano`` (nativo na Base dos Dados; derivado do ano do arquivo nos microdados).
 
 Uso local:
     python projeto/bronze/bronze_ingest.py         # requer a zona raw populada (landing.py)
@@ -27,7 +26,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pyspark.sql import DataFrame, SparkSession, functions as F  # noqa: E402
-from pyspark.sql.types import StringType, StructField, StructType  # noqa: E402
 
 from common.config import Settings, load_settings  # noqa: E402
 from common.io import layer_path  # noqa: E402
@@ -41,29 +39,16 @@ _YEAR_RE = re.compile(r"(20\d{2})")
 def read_csv_all_string(
     spark: SparkSession, path: str, sep: str, encoding: str
 ) -> DataFrame:
-    """Lê um CSV com todas as colunas como STRING e coluna ``_corrupt_record``.
+    """Lê um CSV com todas as colunas como STRING (fidelidade máxima).
 
-    Faz uma leitura leve só para descobrir os nomes das colunas e então relê com
-    um schema explícito (todas STRING), preservando o conteúdo bruto.
+    Com ``inferSchema=False`` e sem schema explícito, o Spark lê todas as colunas
+    como StringType, preservando o conteúdo bruto (nomes originais inclusive).
     """
-    header_df = (
-        spark.read.option("header", True)
-        .option("sep", sep)
-        .option("encoding", encoding)
-        .option("inferSchema", False)
-        .csv(path)
-    )
-    fields = [StructField(c, StringType(), True) for c in header_df.columns]
-    fields.append(StructField("_corrupt_record", StringType(), True))
-    schema = StructType(fields)
-
     return (
         spark.read.option("header", True)
         .option("sep", sep)
         .option("encoding", encoding)
-        .option("mode", "PERMISSIVE")
-        .option("columnNameOfCorruptRecord", "_corrupt_record")
-        .schema(schema)
+        .option("inferSchema", False)
         .csv(path)
     )
 

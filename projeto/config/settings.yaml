@@ -55,6 +55,17 @@ business:
   proficiencia_corte: 743
   meta_ano_alvo: 2030
 
+# ---- Qualidade de dados (gate bronze -> silver) ------------------
+quality:
+  # % máximo de nulo em coluna de métrica antes de virar WARN.
+  null_ratio_warn: 0.05
+  # Tolerância (em pontos percentuais) na comparação cross-source de taxas.
+  cross_source_tol_pp: 1.0
+  # Tolerância na divergência entre IN_ALFABETIZADO e o corte 743 (fração das linhas).
+  corte_mismatch_tol: 0.005
+  # Camada onde os relatórios de qualidade são gravados.
+  report_layer: quality
+
 # ---- Streaming (event-driven, Kinesis) ---------------------------
 # O fluxo é disparado por mudança real no raw (s3:ObjectCreated).
 streaming:

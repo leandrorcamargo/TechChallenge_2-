@@ -142,12 +142,67 @@ flowchart LR
 
 ---
 
-## ✅ Regras de Qualidade de Dados
+## Regras de Qualidade de Dados
 
-- Verificação de duplicidade;
-- Detecção de valores ausentes;
-- Validação de chaves de relacionamento;
-- Consistência entre tabelas.
+A qualidade de dados é implementada como um "gate" (portão) entre a camada Bronze e a
+Silver. O job le a Bronze, executa um catalogo de validacoes e decide se os dados podem
+seguir para a Silver. Se algum check critico falhar, a pipeline para e um alerta e
+disparado; caso contrario, um relatorio de qualidade e gerado e a Silver e liberada.
+
+Codigo em [`projeto/quality/`](projeto/quality/): `checks.py` (checks reutilizaveis),
+`rules.py` (catalogo por tabela), `report.py` (relatorio) e `run_quality.py` (o gate).
+
+### Categorias de validacao
+
+Duplicidade. Chaves de negocio nao podem se repetir. Exemplos: `municipio` unica por
+(ano, id_municipio, serie, rede); `ts_aluno` com `ID_ALUNO` unico por ano; `ts_municipio`
+unica por (ano, CO_MUNICIPIO, TP_SERIE, ID_TIPO_REDE).
+
+Valores ausentes. Chaves de identidade nunca nulas (bloqueia); percentual de nulos em
+metricas acima do limite gera aviso. A ausencia de proficiencia so e medida entre alunos
+presentes (IN_PRESENCA_LP = 1), pois alunos ausentes legitimamente nao tem nota.
+
+Integridade referencial. Codigos de municipio com 7 digitos; todo aluno pertence a um
+municipio presente no agregado oficial; metas por municipio referem-se a municipios
+conhecidos.
+
+Consistencia entre tabelas. Comparacao cross-source da taxa de alfabetizacao entre a Base
+dos Dados (`taxa_alfabetizacao`) e o INEP (`PC_ALUNO_ALFABETIZADO`) no mesmo grao, com
+tolerancia em pontos percentuais. Ha ainda um check que liga a regra de negocio: a flag
+oficial `IN_ALFABETIZADO` deve ser coerente com o corte de 743 pontos
+(`VL_PROFICIENCIA_LP >= 743`).
+
+### Severidade e efeito no gate
+
+ERROR bloqueia a pipeline e dispara alerta (ex.: chave de identidade nula, chave primaria
+duplicada, divergencia grave entre `IN_ALFABETIZADO` e o corte 743).
+WARN apenas registra no relatorio e nao bloqueia (ex.: percentual alto de nulo em metrica,
+divergencia cross-source dentro da tolerancia, codigo de municipio ausente).
+
+Exemplo real observado: nos microdados de 2025 ha 628 alunos com `CO_MUNICIPIO` em branco,
+vinculados a dez escolas nao localizadas no Censo Escolar 2025 (RO, PE, ES, SP, MT). Como
+os registros tem identidade e proficiencia validas e podem ser retificados em versoes
+futuras, o caso e tratado como WARN (alerta), sem bloquear a pipeline.
+
+### Saidas
+
+Relatorio em JSON e Markdown por execucao (`lake/quality/report/<run_id>.json|.md` no
+local; prefixo `quality/report/` no S3), alem de metricas para o CloudWatch
+(`dq_error_count`, `dq_warn_count`, `dq_checks_total`) que alimentam o monitoramento.
+
+### Como executar (local)
+
+A partir de `projeto/`, com a Bronze ja gerada:
+
+```bash
+python quality/run_quality.py
+```
+
+O resultado do gate pode ser PASS, PASS_WITH_WARNINGS ou FAIL. Em caso de FAIL, o processo
+retorna erro e interrompe a pipeline.
+
+Os limites (tolerancias) sao configuraveis em
+[`projeto/config/settings.yaml`](projeto/config/settings.yaml) na secao `quality`.
 
 ---
 
