@@ -92,7 +92,7 @@ Arquitetura híbrida moderna, seguindo a **Arquitetura Medalhão**.
 | Camada | Descrição |
 |--------|-----------|
 | 🥉 **Bronze** | Dados brutos ingeridos das fontes, sem transformações significativas, com histórico completo preservado. |
-| 🥈 **Silver** | Dados tratados: limpeza, tratamento de valores ausentes, padronização de nomes e tipos, validação de consistência, normalização de chaves e **integração das bases**. |
+| 🥈 **Silver** | Dados tratados: limpeza, tratamento de valores ausentes, padronização de nomes e tipos, validação de consistência e normalização de chaves. |
 | 🥇 **Gold** | Camada analítica: datasets prontos para análise (indicador por município, comparação metas × resultados, evolução temporal), preparados para dashboards, análises estatísticas e treinamento de modelos de ML. |
 
 ---
@@ -151,7 +151,7 @@ TechChallenge_2/
 ├── data/              # Dados brutos baixados das fontes (comprimidos: .csv.gz / .zip)
 ├── projeto/           # Código e artefatos da pipeline
 │   ├── bronze/        # Ingestão de dados brutos
-│   ├── silver/        # Tratamento, padronização e integração
+│   ├── silver/        # Tratamento, padronização e validação
 │   ├── gold/          # Camada analítica
 │   ├── quality/       # Scripts de validação e qualidade de dados
 │   └── docs/          # Documentação técnica e diagramas
@@ -167,6 +167,60 @@ TechChallenge_2/
 
 > _A definir conforme o ambiente de nuvem escolhido (ferramentas e justificativas
 > serão documentadas ao longo do desenvolvimento)._
+
+## ⚙️ Execução Local das Camadas
+
+A camada bronze registra as bases Parquet brutas das safras de 2023, 2024 e 2025
+e mantém os microdados organizados por ano, sem padronizar colunas ou valores:
+
+```bash
+python3 src/bronze/bronze.py --years 2023 2024 2025
+```
+
+Saídas principais:
+
+- `data/bronze/ano=2023/`
+- `data/bronze/ano=2024/`
+- `data/bronze/ano=2025/`
+- `data/bronze/common/`
+
+A camada silver lê a bronze por safra, trata os dados brutos e grava as tabelas
+separadas por ano. Nessa etapa são aplicadas limpeza de texto, tratamento de
+valores ausentes, padronização de nomes e tipos, validação de consistência e
+normalização de chaves. A silver também adiciona indicadores de qualidade por
+linha, chaves derivadas (`chave_uf`, `chave_municipio`, `chave_aluno`,
+`chave_escola`), atributos de domínio e um dataset consolidado com os achados de
+qualidade:
+
+```bash
+python3 src/silver/silver.py --years 2023 2024 2025
+```
+
+Saídas principais:
+
+- `data/silver/ano=2023/`, `data/silver/ano=2024/`, `data/silver/ano=2025/`
+- `data/silver/quality_findings.parquet`
+- `data/silver/_manifest.json`
+
+A camada gold lê os dados tratados da silver e cria datasets analíticos prontos
+para dashboards, análises estatísticas e treinamento de modelos de machine
+learning. As saídas incluem indicador de alfabetização por município,
+comparação entre metas e resultados, evolução temporal do indicador, resumo por
+UF/rede e base de features para modelagem:
+
+```bash
+python3 src/gold/gold.py --years 2023 2024 2025
+```
+
+Saídas principais:
+
+- `data/gold/ano=2023/`, `data/gold/ano=2024/`, `data/gold/ano=2025/`
+- `data/gold/consolidado/indicador_alfabetizacao_municipio.parquet`
+- `data/gold/consolidado/comparacao_metas_resultados.parquet`
+- `data/gold/consolidado/evolucao_temporal_indicador.parquet`
+- `data/gold/consolidado/dashboard_resumo_uf.parquet`
+- `data/gold/consolidado/ml_features_municipio.parquet`
+- `data/gold/_manifest.json`
 
 ---
 

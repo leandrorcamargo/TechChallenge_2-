@@ -1,0 +1,148 @@
+{
+  "generated_at_utc": "2026-07-06T02:21:25.835776+00:00",
+  "silver_dir": "data/silver",
+  "gold_dir": "data/gold",
+  "format": "parquet",
+  "years": [
+    2023,
+    2024,
+    2025
+  ],
+  "missing_expected_inputs": [
+    "data/silver/ano=2025/meta_alfabetizacao_uf.parquet"
+  ],
+  "datasets": {
+    "indicador_alfabetizacao_municipio": "Indicador municipal enriquecido com ranking, rede, UF e agregados dos microdados de alunos.",
+    "comparacao_metas_resultados": "Comparacao entre resultado municipal e metas de alfabetizacao da UF e do Brasil por ano/rede.",
+    "evolucao_temporal_indicador": "Serie temporal municipal com variacao anual, media movel e classificacao de tendencia.",
+    "dashboard_resumo_uf": "Resumo agregado por ano, UF e rede para paineis e analises estatisticas.",
+    "ml_features_municipio": "Base wide com features historicas, metas, rankings e target do proximo ano para modelagem."
+  },
+  "preparation_targets": [
+    "dashboards",
+    "analises estatisticas",
+    "treinamento de modelos de machine learning"
+  ],
+  "outputs": [
+    {
+      "path": "data/gold/ano=2023/indicador_alfabetizacao_municipio.parquet",
+      "rows": 11547,
+      "columns": 25,
+      "size_bytes": 570969
+    },
+    {
+      "path": "data/gold/ano=2024/indicador_alfabetizacao_municipio.parquet",
+      "rows": 12448,
+      "columns": 25,
+      "size_bytes": 576398
+    },
+    {
+      "path": "data/gold/ano=2025/indicador_alfabetizacao_municipio.parquet",
+      "rows": 12416,
+      "columns": 25,
+      "size_bytes": 599896
+    },
+    {
+      "path": "data/gold/consolidado/indicador_alfabetizacao_municipio.parquet",
+      "rows": 36411,
+      "columns": 25,
+      "size_bytes": 1418233
+    },
+    {
+      "path": "data/gold/ano=2023/comparacao_metas_resultados.parquet",
+      "rows": 11547,
+      "columns": 39,
+      "size_bytes": 654156
+    },
+    {
+      "path": "data/gold/ano=2024/comparacao_metas_resultados.parquet",
+      "rows": 12448,
+      "columns": 39,
+      "size_bytes": 661834
+    },
+    {
+      "path": "data/gold/ano=2025/comparacao_metas_resultados.parquet",
+      "rows": 12416,
+      "columns": 39,
+      "size_bytes": 684143
+    },
+    {
+      "path": "data/gold/consolidado/comparacao_metas_resultados.parquet",
+      "rows": 36411,
+      "columns": 39,
+      "size_bytes": 1627916
+    },
+    {
+      "path": "data/gold/ano=2023/evolucao_temporal_indicador.parquet",
+      "rows": 11547,
+      "columns": 31,
+      "size_bytes": 608538
+    },
+    {
+      "path": "data/gold/ano=2024/evolucao_temporal_indicador.parquet",
+      "rows": 12448,
+      "columns": 31,
+      "size_bytes": 859173
+    },
+    {
+      "path": "data/gold/ano=2025/evolucao_temporal_indicador.parquet",
+      "rows": 12416,
+      "columns": 31,
+      "size_bytes": 872283
+    },
+    {
+      "path": "data/gold/consolidado/evolucao_temporal_indicador.parquet",
+      "rows": 36411,
+      "columns": 31,
+      "size_bytes": 1907967
+    },
+    {
+      "path": "data/gold/ano=2023/dashboard_resumo_uf.parquet",
+      "rows": 70,
+      "columns": 14,
+      "size_bytes": 14032
+    },
+    {
+      "path": "data/gold/ano=2024/dashboard_resumo_uf.parquet",
+      "rows": 77,
+      "columns": 14,
+      "size_bytes": 14452
+    },
+    {
+      "path": "data/gold/ano=2025/dashboard_resumo_uf.parquet",
+      "rows": 80,
+      "columns": 14,
+      "size_bytes": 14573
+    },
+    {
+      "path": "data/gold/consolidado/dashboard_resumo_uf.parquet",
+      "rows": 227,
+      "columns": 14,
+      "size_bytes": 22865
+    },
+    {
+      "path": "data/gold/ano=2023/ml_features_municipio.parquet",
+      "rows": 11547,
+      "columns": 33,
+      "size_bytes": 724079
+    },
+    {
+      "path": "data/gold/ano=2024/ml_features_municipio.parquet",
+      "rows": 12448,
+      "columns": 33,
+      "size_bytes": 970516
+    },
+    {
+      "path": "data/gold/ano=2025/ml_features_municipio.parquet",
+      "rows": 12416,
+      "columns": 33,
+      "size_bytes": 892800
+    },
+    {
+      "path": "data/gold/consolidado/ml_features_municipio.parquet",
+      "rows": 36411,
+      "columns": 33,
+      "size_bytes": 2112628
+    }
+  ]
+}

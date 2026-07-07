@@ -1,0 +1,157 @@
+{
+  "generated_at_utc": "2026-07-06T02:20:19.612661+00:00",
+  "bronze_dir": "data/bronze",
+  "silver_dir": "data/silver",
+  "format": "parquet",
+  "years": [
+    2023,
+    2024,
+    2025
+  ],
+  "missing_expected_inputs": [],
+  "transformations": [
+    "column names converted to snake_case",
+    "text fields trimmed and empty strings converted to null",
+    "categorical nulls filled with controlled values such as NAO_INFORMADO and NAO_APLICADO",
+    "row-level missing-value indicators added",
+    "relationship keys normalized into derived chave_* columns",
+    "percentage and metric columns converted to numeric types",
+    "domain attributes derived for literacy result, attendance, network, item and target metadata",
+    "duplicate rows removed",
+    "consistency validations registered in the manifest and exported as a silver quality dataset"
+  ],
+  "quality_findings": [
+    {
+      "table": "TS_ALUNO",
+      "severity": "warning",
+      "rule": "referential_integrity",
+      "parent_table": "TS_MUNICIPIO",
+      "columns": [
+        "ano_avaliacao",
+        "co_municipio"
+      ],
+      "invalid_keys": 9
+    },
+    {
+      "table": "TS_MUNICIPIO",
+      "severity": "warning",
+      "rule": "referential_integrity",
+      "parent_table": "TS_ESTADO",
+      "columns": [
+        "ano_avaliacao",
+        "co_uf"
+      ],
+      "invalid_keys": 1
+    }
+  ],
+  "quality_output": {
+    "path": "data/silver/quality_findings.parquet",
+    "rows": 2,
+    "columns": 6,
+    "size_bytes": 4171
+  },
+  "outputs": [
+    {
+      "path": "data/silver/ano=2023/aluno.parquet",
+      "rows": 1747439,
+      "columns": 27,
+      "size_bytes": 32487137
+    },
+    {
+      "path": "data/silver/ano=2024/aluno.parquet",
+      "rows": 2120560,
+      "columns": 27,
+      "size_bytes": 33397856
+    },
+    {
+      "path": "data/silver/ano=2025/aluno.parquet",
+      "rows": 2222792,
+      "columns": 40,
+      "size_bytes": 57287601
+    },
+    {
+      "path": "data/silver/ano=2023/estado.parquet",
+      "rows": 70,
+      "columns": 13,
+      "size_bytes": 9915
+    },
+    {
+      "path": "data/silver/ano=2024/estado.parquet",
+      "rows": 75,
+      "columns": 22,
+      "size_bytes": 19600
+    },
+    {
+      "path": "data/silver/ano=2025/estado.parquet",
+      "rows": 80,
+      "columns": 22,
+      "size_bytes": 20043
+    },
+    {
+      "path": "data/silver/ano=2023/item.parquet",
+      "rows": 3443,
+      "columns": 25,
+      "size_bytes": 71472
+    },
+    {
+      "path": "data/silver/ano=2024/item.parquet",
+      "rows": 1671,
+      "columns": 25,
+      "size_bytes": 66693
+    },
+    {
+      "path": "data/silver/ano=2025/item.parquet",
+      "rows": 1960,
+      "columns": 25,
+      "size_bytes": 77317
+    },
+    {
+      "path": "data/silver/ano=2023/municipio.parquet",
+      "rows": 11547,
+      "columns": 16,
+      "size_bytes": 280524
+    },
+    {
+      "path": "data/silver/ano=2024/municipio.parquet",
+      "rows": 12448,
+      "columns": 25,
+      "size_bytes": 512622
+    },
+    {
+      "path": "data/silver/ano=2025/municipio.parquet",
+      "rows": 12416,
+      "columns": 25,
+      "size_bytes": 523725
+    },
+    {
+      "path": "data/silver/ano=2023/meta_alfabetizacao_brasil.parquet",
+      "rows": 1,
+      "columns": 16,
+      "size_bytes": 10757
+    },
+    {
+      "path": "data/silver/ano=2024/meta_alfabetizacao_brasil.parquet",
+      "rows": 1,
+      "columns": 16,
+      "size_bytes": 10757
+    },
+    {
+      "path": "data/silver/ano=2025/meta_alfabetizacao_brasil.parquet",
+      "rows": 1,
+      "columns": 16,
+      "size_bytes": 10757
+    },
+    {
+      "path": "data/silver/ano=2023/meta_alfabetizacao_uf.parquet",
+      "rows": 27,
+      "columns": 18,
+      "size_bytes": 13296
+    },
+    {
+      "path": "data/silver/ano=2024/meta_alfabetizacao_uf.parquet",
+      "rows": 27,
+      "columns": 18,
+      "size_bytes": 13317
+    }
+  ]
+}

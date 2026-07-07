@@ -1,0 +1,6 @@
+pandas
+pyarrow
+great_expectations
+requests
+colorama
+tabulate
