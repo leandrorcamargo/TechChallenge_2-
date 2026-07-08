@@ -18,6 +18,10 @@ env/
 data/**/*.csv
 !data/*.csv.gz
 
+# Data lake local e pasta source preparada (derivados/grandes - NUNCA versionar)
+lake/
+source/
+
 # Credenciais / segredos
 .env
 *.key
