@@ -76,24 +76,37 @@ alfabetização do **INEP**. Os arquivos brutos baixados ficam versionados na pa
 
 ---
 
-## 🏗️ Arquitetura Esperada
+## 🏗️ Arquitetura da Solução
 
-Arquitetura híbrida moderna, seguindo a **Arquitetura Medalhão**.
+Arquitetura em **Databricks** (Unity Catalog + Delta Lake), seguindo a **Arquitetura Medalhão**.
+Documentação detalhada, com diagramas e mapeamento de tabelas, em
+[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md).
 
-### Ingestão Híbrida
+```mermaid
+flowchart LR
+    A["Fontes (data/)"] --> P["prep_source.py"]
+    P --> B["Bronze<br/>Delta, raw"]
+    B --> S["Silver<br/>tratada + integrada"]
+    S --> G["Gold<br/>analitica"]
+    G --> C["Dashboards / Analises / ML"]
+```
 
-- **Batch** — processamento periódico de dados históricos (metas educacionais,
-  municípios, dados agregados nacionais).
-- **Streaming** — simulação de ingestão de eventos em tempo quase real (atualização
-  de indicadores, novas medições de desempenho, atualização de metas/resultados).
+### Ingestão
+
+- **Batch** (implementado) — três notebooks PySpark executados em ordem: bronze, silver, gold.
+- **Streaming** (nativo do Databricks) — descrito como guia na
+  [documentação de arquitetura](projeto/docs/arquitetura.md#6-ingestao-streaming-databricks):
+  novos arquivos chegando a uma pasta de landing são processados de forma incremental via
+  **Auto Loader** ou **file arrival trigger** (Databricks Workflows), acionados pela chegada
+  real de arquivos.
 
 ### Camadas Medalhão
 
 | Camada | Descrição |
 |--------|-----------|
-| 🥉 **Bronze** | Dados brutos ingeridos das fontes, sem transformações significativas, com histórico completo preservado. |
-| 🥈 **Silver** | Dados tratados: limpeza, tratamento de valores ausentes, padronização de nomes e tipos, validação de consistência, normalização de chaves e **integração das bases**. |
-| 🥇 **Gold** | Camada analítica: datasets prontos para análise (indicador por município, comparação metas × resultados, evolução temporal), preparados para dashboards, análises estatísticas e treinamento de modelos de ML. |
+| Bronze | Cópia fiel das fontes, tudo como string; apenas normalização de nomes de coluna. |
+| Silver | Tipos corrigidos, `rede` padronizada, tratamento de duplicidades e nulos, validação de consistência (inclui cross-source) e **integração das bases**. |
+| Gold | Sete datasets analíticos: indicadores por município, metas × resultados (município e UF), evolução temporal, agregações por UF, métricas Brasil e features para ML. |
 
 ---
 
@@ -130,7 +143,9 @@ Boas práticas de eficiência no uso da nuvem:
 
 ## ☁️ Implementação em Cloud
 
-A solução será implementada em ambiente de nuvem (**AWS / GCP / Azure**).
+A solução é implementada no **Databricks** (plataforma de dados em nuvem), usando
+**Unity Catalog** para organização/governança das tabelas e **Delta Lake** como formato
+de armazenamento das camadas bronze, silver e gold.
 
 ---
 
@@ -148,25 +163,32 @@ A camada Gold poderá ser usada para:
 
 ```
 TechChallenge_2/
-├── data/              # Dados brutos baixados das fontes (comprimidos: .csv.gz / .zip)
+├── data/              # Dados brutos das fontes (comprimidos: .csv.gz / .zip) — versionados
 ├── projeto/           # Código e artefatos da pipeline
-│   ├── bronze/        # Ingestão de dados brutos
-│   ├── silver/        # Tratamento, padronização e integração
-│   ├── gold/          # Camada analítica
-│   ├── quality/       # Scripts de validação e qualidade de dados
-│   └── docs/          # Documentação técnica e diagramas
+│   ├── bronze/        # prep_source.py + 01_bronze_ingestao.ipynb
+│   ├── silver/        # 02_silver_limpeza_validacao.ipynb
+│   ├── gold/          # 03_gold_datasets_analiticos.ipynb
+│   └── docs/          # Documentação técnica e diagramas (arquitetura.md)
 └── README.md          # Documentação da solução
 ```
 
-> A separação entre [`data/`](data/) (dados de entrada) e [`projeto/`](projeto/)
-> (código da pipeline) mantém os dados baixados isolados da lógica de processamento.
+> Fluxo de execução: `prep_source.py` prepara os arquivos em uma pasta `source/` (não
+> versionada), que é enviada ao workspace do Databricks; então os notebooks bronze, silver e
+> gold são executados em ordem. Dados derivados/intermediários (`source/`, `lake/`) ficam fora
+> do Git — apenas as fontes originais em [`data/`](data/) são versionadas.
 
 ---
 
 ## 🚀 Tecnologias
 
-> _A definir conforme o ambiente de nuvem escolhido (ferramentas e justificativas
-> serão documentadas ao longo do desenvolvimento)._
+- **Databricks** — ambiente gerenciado de Spark com notebooks e computação sob demanda.
+- **Delta Lake** — formato transacional (ACID) sobre Parquet para as tabelas do medalhão.
+- **Unity Catalog** — organização das tabelas por schema (`bronze`/`silver`/`gold`).
+- **PySpark** — processamento distribuído (lida com os microdados de aluno, milhões de linhas).
+- **Parquet + particionamento por ano** — leitura colunar e redução de custo de scan (FinOps).
+
+As justificativas de cada escolha estão em
+[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md#7-tecnologias-e-justificativas).
 
 ---
 
