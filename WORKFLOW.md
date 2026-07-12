@@ -4,6 +4,8 @@
 
 Pipeline de dados educacionais em arquitetura Medallion (Bronze/Silver/Gold) implementado no Databricks.
 
+**Status:** Projeto em produção com execução automatizada via Databricks Jobs.
+
 ---
 
 ## 📂 Estrutura do Projeto
