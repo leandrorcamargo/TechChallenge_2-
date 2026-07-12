@@ -1,4 +1,4 @@
-"""Preparacao da fonte (E1) — extrai data/ do S3 para source/ no workspace.
+"""Preparacao da fonte (E1) - extrai data/ do S3 para source/ no workspace.
 
 Nao faz transformacao de dados: apenas descompacta/organiza os arquivos que ja
 temos no S3 numa pasta source/ no workspace com nomes logicos, para a camada Bronze ler.
@@ -14,8 +14,7 @@ Saida (source/):
     ts_estado/2023.csv, 2024.csv, 2025.csv
 
 Uso:
-    Configure S3_BUCKET e S3_PREFIX antes de executar.
-    python projeto/bronze/prep_source.py
+    python scripts/prep_source.py
 """
 
 from __future__ import annotations
@@ -23,7 +22,6 @@ from __future__ import annotations
 import subprocess
 import sys
 
-# Instala dependencias necessarias
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "boto3", "python-dotenv"])
 
 import os
@@ -37,11 +35,11 @@ import boto3
 from dotenv import load_dotenv
 
 # Configuracao S3
-S3_BUCKET = "amzn-s3-fiap-tech2"  # Bucket S3 com os dados
-S3_PREFIX = "data/"  # prefixo onde estao os arquivos no S3
+S3_BUCKET = "amzn-s3-fiap-tech2"
+S3_PREFIX = "data/"
 
-# Configuracao local (workspace) - dentro do repositório
-SOURCE = Path("/Workspace/Users/justinofilipe03@gmail.com/TechChallenge_2/source")  # caminho workspace onde gravar
+# Configuracao local (workspace)
+SOURCE = Path("/Workspace/Users/justinofilipe03@gmail.com/TechChallenge_2/source")
 
 # Base dos Dados (.csv.gz): arquivo original -> nome logico na source/
 BASE_DOS_DADOS = {
@@ -52,7 +50,7 @@ BASE_DOS_DADOS = {
     "br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_municipio.csv.gz": "meta_alfabetizacao_municipio.csv.gz",
 }
 
-# Microdados: tabelas extraidas de cada zip (TS_ITEM fica de fora).
+# Microdados
 MICRODADOS_ZIPS = [
     "microdados_avaliacao_da_alfabetizacao_2023.zip",
     "microdados_avaliacao_da_alfabetizacao_2024.zip",
@@ -63,17 +61,13 @@ _YEAR = re.compile(r"(20\d{2})")
 
 
 def preparar() -> None:
-    # Carrega credenciais AWS do arquivo .env no repositório
     env_path = Path("/Workspace/Users/justinofilipe03@gmail.com/TechChallenge_2/.env")
     load_dotenv(env_path)
     
-    # Inicializa cliente S3 (usa credenciais do .env automaticamente)
     s3 = boto3.client("s3")
-    
-    # Cria diretorio no workspace
     SOURCE.mkdir(parents=True, exist_ok=True)
 
-    # 1) Base dos Dados: le do S3 e grava no workspace com nomes logicos.
+    # Base dos Dados
     for origem, destino in BASE_DOS_DADOS.items():
         s3_key = f"{S3_PREFIX}{origem}"
         obj = s3.get_object(Bucket=S3_BUCKET, Key=s3_key)
@@ -83,12 +77,11 @@ def preparar() -> None:
             fout.write(obj["Body"].read())
         print(f"copiado do S3: {destino}")
 
-    # 2) Microdados: le zip do S3, extrai TS_ALUNO/TS_MUNICIPIO/TS_ESTADO por ano.
+    # Microdados
     for zip_name in MICRODADOS_ZIPS:
         year = _YEAR.search(zip_name).group(1)
         s3_key = f"{S3_PREFIX}{zip_name}"
         
-        # Le o zip do S3 para memoria
         obj = s3.get_object(Bucket=S3_BUCKET, Key=s3_key)
         zip_bytes = BytesIO(obj["Body"].read())
         
