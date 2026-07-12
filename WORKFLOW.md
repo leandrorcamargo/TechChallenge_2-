@@ -67,32 +67,72 @@ python scripts/prep_source.py
 3. Execute `projeto/gold/03_gold_datasets_analiticos.ipynb`
 
 #### Execução Automatizada (Databricks Job)
-**Job Name:** `TechChallenge Pipeline - Bronze Silver Gold`
 
-**Tasks:**
-1. **Bronze_Ingestao**
-   - Lê dados de `source/`
-   - Valida schemas
-   - Cria tabelas em `workspace.bronze`
-   - Particiona por ano
+**Job ID:** `584688505156294`  
+**Job Name:** `TechChallenge Pipeline - Bronze Silver Gold`  
+**URL:** https://dbc-082a3d64-ec06.cloud.databricks.com/#job/584688505156294
 
-2. **Silver_Limpeza_Validacao** *(depende de Bronze)*
-   - Lê de `workspace.bronze`
-   - Remove duplicatas
-   - Padroniza tipos de dados
-   - Valida consistência
-   - Cria tabelas em `workspace.silver`
+**Configuração:**
+- **Compute:** Serverless (queue habilitada)
+- **Max concurrent runs:** 1 (executa um de cada vez)
+- **Notificações:** Email para justinofilipe03@gmail.com (sucesso e falha)
 
-3. **Gold_Datasets_Analiticos** *(depende de Silver)*
-   - Lê de `workspace.silver`
-   - Cria agregações
-   - Integra múltiplas fontes
-   - Gera datasets finais em `workspace.gold`
+**Tasks configuradas:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ 1. Bronze_Ingestao                                      │
+│    Path: projeto/bronze/01_bronze_ingestao.ipynb        │
+│    Timeout: 1 hora | Retries: 2                         │
+│    Descrição: Ingesta dados de source/ e cria          │
+│               tabelas Bronze no Unity Catalog           │
+└────────────────────┬────────────────────────────────────┘
+                     │ (depends_on)
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 2. Silver_Limpeza_Validacao                             │
+│    Path: projeto/silver/02_silver_limpeza_validacao.ipynb│
+│    Timeout: 1 hora | Retries: 2                         │
+│    Descrição: Limpa e valida dados Bronze, criando     │
+│               tabelas Silver                            │
+└────────────────────┬────────────────────────────────────┘
+                     │ (depends_on)
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 3. Gold_Datasets_Analiticos                             │
+│    Path: projeto/gold/03_gold_datasets_analiticos.ipynb │
+│    Timeout: 1 hora | Retries: 2                         │
+│    Descrição: Cria datasets analíticos finais a partir │
+│               das tabelas Silver                        │
+└─────────────────────────────────────────────────────────┘
+```
 
 **Como executar o Job:**
-- Acesse: Jobs > "TechChallenge Pipeline - Bronze Silver Gold"
-- Clique em "Run Now"
-- Monitore: Tasks executam em sequência (Bronze → Silver → Gold)
+
+1. **Via UI:**
+   - Acesse: https://dbc-082a3d64-ec06.cloud.databricks.com/#job/584688505156294
+   - Clique em "Run Now"
+   - Monitore: Tasks executam em sequência (Bronze → Silver → Gold)
+   - Receba notificação por email ao finalizar
+
+2. **Via CLI:**
+   ```bash
+   databricks jobs run-now --job-id 584688505156294
+   ```
+
+3. **Agendar execução:**
+   - Acesse o Job na UI
+   - Configure trigger (schedule/periodic/file_arrival/table_update)
+   - Exemplos:
+     - Diário às 6h: `0 6 * * *` (cron)
+     - A cada 6 horas: periodic interval
+     - Quando tabelas source/ forem atualizadas
+
+**Comportamento:**
+- ✅ Se Bronze falhar → Silver e Gold não executam
+- ✅ Se Silver falhar → Gold não executa
+- ✅ Cada task retry automático até 2 vezes em caso de falha
+- ✅ Email enviado ao concluir (sucesso ou falha)
 
 ---
 
