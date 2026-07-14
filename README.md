@@ -141,9 +141,11 @@ A observabilidade se apoia no que o Databricks já oferece: logs de Jobs, métri
 
 ## FinOps
 
-Algumas decisões seguram o custo sem prejudicar o resultado. As tabelas em Delta/Parquet particionadas por ano reduzem o volume lido em cada query (*partition pruning*), o que corta custo de scan e tempo. O streaming incremental recalcula só as partições afetadas, evitando reprocessar todo o histórico. A integração antecipada na silver deixa a gold mais leve. Os clusters são efêmeros, sobem para o Job e encerram no fim (*auto-terminate*), então não há custo ocioso. E o storage no S3 guarda dados brutos comprimidos e as camadas Delta por um custo baixo por GB.
+Na análise de FinOps, validamos os custos utilizando as System Tables de Billing do Databricks (system.billing.usage), que registram o consumo real de recursos do ambiente.
 
-Num contexto acadêmico, com execuções sob demanda, o custo é dominado por poucas horas de cluster por semana e alguns GB no S3. Como ordem de grandeza: storage no S3 fica abaixo de US$ 1/mês; o compute do Databricks (job cluster pequeno, algumas horas no mês) por volta de US$ 5 a 20/mês; transferência e requisições, desprezíveis. No total, algo entre US$ 6 e 21 por mês — valores ilustrativos, que mudam conforme o tipo de instância, a região e a frequência de execução.
+Os dados mostraram um custo atual de aproximadamente US$ 5,50 por mês, refletindo a fase de desenvolvimento do projeto, em que o ambiente foi utilizado de forma pontual e sem execução recorrente.
+Para estimar o cenário de produção, utilizamos o consumo real de DBUs, os preços oficiais do Databricks e uma operação mensal contínua do pipeline Bronze, Silver e Gold. Com isso, projetamos um custo operacional de aproximadamente US$ 13 por mês (US$ 160 por ano), valor que representa o ambiente em funcionamento regular.
+Também identificamos um crescimento médio de 17,9% ao ano. Mantida essa tendência, o custo anual pode chegar a aproximadamente US$ 429 em 2030.
 
 ## Decisões arquiteturais
 
@@ -190,4 +192,4 @@ O desenvolvimento segue commits descritivos, branches por funcionalidade e integ
 
 ## Vídeo executivo
 
-Apresentação de até 5 minutos cobrindo o problema de negócio, a arquitetura, o valor da pipeline e o potencial de uso em IA: https://drive.google.com/file/d/1AId5YoI50XOTlVGVHedo2clFWsKWcldw/view
+Apresentação de até 5 minutos: https://drive.google.com/file/d/1AId5YoI50XOTlVGVHedo2clFWsKWcldw/view
