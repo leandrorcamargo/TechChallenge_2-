@@ -10,7 +10,7 @@ A implementação roda no Databricks sobre a AWS: o data lake fica no Amazon S3,
 
 - **Repositório:** https://github.com/leandrorcamargo/TechChallenge_2-
 - **S3:** https://us-east-2.console.aws.amazon.com/s3/buckets/amzn-s3-fiap-tech2?region=us-east-2&tab=objects
-- **Workspace Databricks:** https://dbc-082a3d64-ec06.cloud.databricks.com
+- **Databricks:** https://dbc-082a3d64-ec06.cloud.databricks.com
 - **Vídeo executivo (até 5 min):** https://drive.google.com/file/d/1AId5YoI50XOTlVGVHedo2clFWsKWcldw/view
 - **Apresentação (slides):** https://docs.google.com/presentation/d/1P_KsUP0KAQ93QWClQs_smGl0ya4aArsg/edit
 
