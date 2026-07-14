@@ -1,208 +1,193 @@
 # Tech Challenge – Fase 2
-## Pipeline Híbrido para Análise da Alfabetização no Brasil 🇧🇷📊
 
-Projeto integrador da Fase 2 da Pós-Tech, desenvolvido por um time que atua como
-equipe de engenharia de dados de uma organização pública de análise educacional.
-O objetivo é construir uma **pipeline híbrida de dados (Batch + Streaming)**,
-escalável em nuvem, que integre diferentes fontes relacionadas ao **Indicador
-Criança Alfabetizada**, garantindo qualidade, escalabilidade e eficiência de custos.
+## Pipeline Híbrido para Análise da Alfabetização no Brasil
 
----
+Projeto integrador da Fase 2 da Pós-Tech. O grupo assume o papel de uma equipe de engenharia de dados de uma organização pública de análise educacional e monta uma pipeline híbrida (batch + streaming) para integrar as fontes ligadas ao Indicador Criança Alfabetizada, com atenção a qualidade, escalabilidade e custo.
 
-## 📌 Contexto do Problema
+A implementação roda no Databricks sobre a AWS: o data lake fica no Amazon S3, as tabelas são gravadas em Delta Lake e a organização/governança é feita pelo Unity Catalog. As camadas seguem a arquitetura medalhão (bronze, silver e gold).
 
-A alfabetização na infância é um dos pilares para o desenvolvimento educacional,
-social e econômico do país. O **Compromisso Nacional Criança Alfabetizada** é uma
-política pública que mobiliza União, estados, Distrito Federal e municípios para
-garantir que todas as crianças estejam alfabetizadas até o final do **2º ano do
-ensino fundamental**.
+## Links do projeto
 
-A partir da **Pesquisa Alfabetiza Brasil (INEP, 2023)** foi definido o ponto de
-corte de **743 pontos** na escala de proficiência do Saeb, nível a partir do qual
-uma criança pode ser considerada alfabetizada. Com base nesse parâmetro foi criado
-o **Indicador Criança Alfabetizada**, que expressa o percentual de estudantes que
-atingem esse patamar. A **meta nacional** é que, até **2030**, todas as crianças
-brasileiras estejam alfabetizadas ao final do 2º ano.
+- **Repositório:** https://github.com/leandrorcamargo/TechChallenge_2-
+- **Data lake (S3):** `s3://amzn-s3-fiap-tech2` — console AWS, us-east-2
+- **Workspace Databricks:** https://dbc-082a3d64-ec06.cloud.databricks.com
+- **Vídeo executivo (até 5 min):** https://drive.google.com/file/d/1AId5YoI50XOTlVGVHedo2clFWsKWcldw/view
+- **Apresentação (slides):** https://docs.google.com/presentation/d/1P_KsUP0KAQ93QWClQs_smGl0ya4aArsg/edit
 
-Compreender os fatores que influenciam a alfabetização exige integrar diferentes
-fontes de dados: metas nacionais e estaduais, metas municipais, dados territoriais,
-microdados educacionais e indicadores de desempenho.
+> Os links do S3 e do Databricks apontam para ambientes autenticados e dependem das credenciais do time.
 
-**Fonte de dados:** Indicador Criança Alfabetizada – [Base dos Dados](https://basedosdados.org/)
+## Contexto
 
----
+A alfabetização nos primeiros anos escolares é base para o desenvolvimento educacional e social do país. O Compromisso Nacional Criança Alfabetizada é a política pública que reúne União, estados, DF e municípios com a meta de que toda criança esteja alfabetizada até o fim do 2º ano do ensino fundamental.
 
-## 🎯 Objetivo Técnico
+A partir da Pesquisa Alfabetiza Brasil (INEP, 2023), o Saeb passou a usar 743 pontos como ponto de corte: acima disso, a criança é considerada alfabetizada. Esse parâmetro deu origem ao Indicador Criança Alfabetizada, que mede o percentual de estudantes que alcança esse patamar. A meta nacional é chegar a 2030 com todas as crianças alfabetizadas ao final do 2º ano.
 
-Construir uma pipeline de dados escalável em nuvem que realize:
+Só olhar o indicador isolado não explica muita coisa. Para entender o que influencia a alfabetização é preciso cruzar fontes diferentes — metas nacionais, estaduais e municipais, dados territoriais, microdados e indicadores de desempenho. É esse cruzamento que permite medir a distância de cada município em relação à meta de 2030, comparar realidades regionais e dar base a decisões de política pública.
 
-- Ingestão de diferentes fontes de dados educacionais;
-- Tratamento e padronização das informações;
-- Integração entre bases heterogêneas;
-- Disponibilização de uma camada analítica confiável;
-- Monitoramento operacional do pipeline;
-- Controle de custos da infraestrutura.
+O trabalho da pipeline é justamente esse: pegar dados públicos brutos e espalhados e entregar uma camada analítica confiável, pronta para dashboards, análises estatísticas e modelos de machine learning.
 
----
+**Fonte principal:** Indicador Criança Alfabetizada, da Base dos Dados, além dos microdados oficiais do INEP.
 
-## 🗂️ Fontes de Dados
+## Objetivo técnico
 
-A pipeline integra as seguintes entidades, originadas das avaliações de
-alfabetização do **INEP**. Os arquivos brutos baixados ficam versionados na pasta
-[`data/`](data/) no formato comprimido (`.csv.gz` / `.zip`):
+Construir uma pipeline em nuvem que faça a ingestão de fontes educacionais diferentes, trate e padronize as informações, integre as bases, disponibilize uma camada analítica confiável e permita monitorar a operação e controlar os custos da infraestrutura.
 
-| Entidade | Arquivo em `data/` | Formato |
-|----------|--------------------|---------|
-| UF | `br_inep_avaliacao_alfabetizacao_uf.csv.gz` | CSV (gzip) |
-| Município | `br_inep_avaliacao_alfabetizacao_municipio.csv.gz` | CSV (gzip) |
-| Meta Alfabetização Brasil | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_brasil.csv.gz` | CSV (gzip) |
-| Meta Alfabetização por UF | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_uf.csv.gz` | CSV (gzip) |
-| Meta Alfabetização por Município | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_municipio.csv.gz` | CSV (gzip) |
-| Dados de alunos (microdados) | `microdados_avaliacao_da_alfabetizacao_2023.zip`, `microdados_avaliacao_da_alfabetizacao_2024.zip`, `microdados_AEEB_2025.zip` | ZIP |
+## Fontes de dados
 
-> Os microdados (`microdados_*.zip`) contêm as tabelas `TS_ALUNO`, `TS_MUNICIPIO`,
-> `TS_ESTADO` e `TS_ITEM`, além de dicionários e scripts de leitura (R / SAS / SPSS).
+Os arquivos brutos ficam versionados na pasta `data/`, comprimidos em `.csv.gz` ou `.zip`:
 
-### Fontes externas (opcional – enriquecimento)
+| Entidade | Arquivo em `data/` | Formato | Origem |
+|---|---|---|---|
+| UF | `br_inep_avaliacao_alfabetizacao_uf.csv.gz` | CSV (gzip) | Base dos Dados |
+| Município | `br_inep_avaliacao_alfabetizacao_municipio.csv.gz` | CSV (gzip) | Base dos Dados |
+| Meta Alfabetização Brasil | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_brasil.csv.gz` | CSV (gzip) | Base dos Dados |
+| Meta Alfabetização por UF | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_uf.csv.gz` | CSV (gzip) | Base dos Dados |
+| Meta Alfabetização por Município | `br_inep_avaliacao_alfabetizacao_meta_alfabetizacao_municipio.csv.gz` | CSV (gzip) | Base dos Dados |
+| Dados de alunos (microdados) | `microdados_avaliacao_da_alfabetizacao_2023.zip`, `..._2024.zip`, `microdados_AEEB_2025.zip` | ZIP | INEP |
 
-| Dimensão | Fonte |
-|----------|-------|
-| Estrutura escolar | Censo Escolar (INEP) |
-| Socioeconômico | IBGE – Censo / PNAD |
-| Desenvolvimento humano | Atlas do Desenvolvimento Humano |
-| Vulnerabilidade social | Cadastro Único / Bolsa Família |
-| Território | IBGE |
-| Financiamento | FUNDEB |
+Os microdados trazem as tabelas `TS_ALUNO`, `TS_MUNICIPIO`, `TS_ESTADO` e `TS_ITEM`, com dicionários e scripts de leitura em R, SAS e SPSS. Eles são a fonte canônica do projeto; os agregados da Base dos Dados entram também como referência para validação cruzada.
 
----
+Como enriquecimento opcional (para modelos preditivos ou clusters de vulnerabilidade), dá para trazer contexto de fora: estrutura escolar pelo Censo Escolar (INEP), socioeconômico pelo IBGE (Censo/PNAD), desenvolvimento humano pelo Atlas, vulnerabilidade pelo Cadastro Único/Bolsa Família, território pelo IBGE e financiamento pelo FUNDEB.
 
-## 🏗️ Arquitetura da Solução
+## Arquitetura
 
-Arquitetura em **Databricks** (Unity Catalog + Delta Lake), seguindo a **Arquitetura Medalhão**.
-Documentação detalhada, com diagramas e mapeamento de tabelas, em
-[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md).
+A pipeline roda no Databricks (AWS), com storage no S3, tabelas em Delta Lake, catálogo no Unity Catalog e orquestração pelos Databricks Workflows, seguindo o medalhão.
 
 ```mermaid
 flowchart LR
-    A["Fontes (data/)"] --> P["prep_source.py"]
-    P --> B["Bronze<br/>Delta, raw"]
-    B --> S["Silver<br/>tratada + integrada"]
-    S --> G["Gold<br/>analitica"]
-    G --> C["Dashboards / Analises / ML"]
+    subgraph SRC["Fontes (data/ no repositório)"]
+        A1["5 CSV .gz agregados<br/>(Base dos Dados)"]
+        A2["Microdados INEP<br/>TS_ALUNO / MUNICIPIO / ESTADO<br/>2023-2025"]
+    end
+
+    subgraph PREP["Preparação"]
+        P["prep_source.py<br/>extrai data/ para source/"]
+    end
+
+    subgraph DBX["Databricks (AWS) · Unity Catalog + Delta · storage no S3"]
+        B["Bronze<br/>raw, tudo string"]
+        S["Silver<br/>tipado, limpo, integrado, validado"]
+        G["Gold<br/>7 datasets analíticos"]
+    end
+
+    subgraph CONS["Consumo"]
+        D1["Dashboards / BI"]
+        D2["Análises estatísticas"]
+        D3["Machine Learning"]
+    end
+
+    A1 --> P
+    A2 --> P
+    P --> B --> S --> G
+    G --> D1 & D2 & D3
 ```
 
-### Ingestão
+## Fluxo de dados (batch)
 
-- **Batch** (implementado) — três notebooks PySpark executados em ordem: bronze, silver, gold.
-- **Streaming** (nativo do Databricks) — descrito como guia na
-  [documentação de arquitetura](projeto/docs/arquitetura.md#6-ingestao-streaming-databricks):
-  novos arquivos chegando a uma pasta de landing são processados de forma incremental via
-  **Auto Loader** ou **file arrival trigger** (Databricks Workflows), acionados pela chegada
-  real de arquivos.
+O caminho principal é batch: `prep_source.py` descompacta o `data/` e organiza tudo em `source/`, que é enviado ao workspace (ou à pasta de landing no S3). A partir daí, três notebooks PySpark rodam em ordem — bronze, silver e gold.
 
-### Camadas Medalhão
+```mermaid
+flowchart TD
+    RAW["source/ (arquivos no workspace / landing no S3)"] -->|01_bronze_ingestao| B["bronze.* (Delta, string)"]
+    B -->|02_silver_limpeza_validacao| TRAT["Tratamento:<br/>tipos, rede, dedup, chaves nulas"]
+    TRAT --> VAL{"Validação:<br/>duplicidade, intervalos,<br/>nulos, cross-source"}
+    VAL --> Sint["silver.* + tabelas integradas"]
+    Sint -->|03_gold_datasets_analiticos| G["gold.* (7 datasets)"]
+    G --> ATH["SQL / BI / ML"]
+```
 
-| Camada | Descrição |
-|--------|-----------|
-| Bronze | Cópia fiel das fontes, tudo como string; apenas normalização de nomes de coluna. |
-| Silver | Tipos corrigidos, `rede` padronizada, tratamento de duplicidades e nulos, validação de consistência (inclui cross-source) e **integração das bases**. |
-| Gold | Sete datasets analíticos: indicadores por município, metas × resultados (município e UF), evolução temporal, agregações por UF, métricas Brasil e features para ML. |
+**Ordem de execução:**
 
----
+1. `projeto/bronze/prep_source.py`
+2. `projeto/bronze/01_bronze_ingestao.ipynb`
+3. `projeto/silver/02_silver_limpeza_validacao.ipynb`
+4. `projeto/gold/03_gold_datasets_analiticos.ipynb`
 
-## ✅ Regras de Qualidade de Dados
+## Ingestão híbrida
 
-- Verificação de duplicidade;
-- Detecção de valores ausentes;
-- Validação de chaves de relacionamento;
-- Consistência entre tabelas.
+O batch é o que está implementado e faz a carga histórica (metas, municípios e agregados nacionais).
 
----
+O streaming usa o que o Databricks já oferece de forma nativa, reagindo à chegada real de arquivos — sem gerar dados sintéticos. Quando um arquivo novo cai na pasta de landing (por exemplo, os microdados de um novo ano), o Auto Loader (`cloudFiles`) detecta só o que chegou e faz append incremental na bronze; silver e gold são recalculadas apenas nas partições de ano afetadas.
 
-## 📈 Monitoramento da Pipeline
+```mermaid
+flowchart LR
+    NOVO["Novo arquivo chega<br/>(ex.: microdados de um novo ano)"] --> LND["Landing no S3<br/>/Volumes/.../landing/ts_aluno"]
+    LND --> AL["Auto Loader (cloudFiles)<br/>readStream detecta só o novo"]
+    AL --> BRZ["append incremental em bronze.ts_aluno<br/>(writeStream + checkpoint)"]
+    BRZ --> DWN["silver e gold recalculadas<br/>só nas partições (ano) afetadas"]
+```
 
-Mecanismos de observabilidade esperados:
+Como alternativa sem código, dá para configurar um Job com gatilho *file arrival* nos Workflows: a chegada de um arquivo dispara a sequência bronze → silver → gold automaticamente.
 
-- Falhas de ingestão;
-- Latência do pipeline;
-- Volume de dados processados;
-- Alertas de erro.
+## Camadas do medalhão
 
----
+A **bronze** é a cópia fiel das fontes — tudo como string, só com os nomes de coluna normalizados, preservando o histórico completo. São oito tabelas: `indicador_alfabetizacao_uf`, `indicador_alfabetizacao_municipio`, `meta_alfabetizacao_brasil`, `meta_alfabetizacao_uf`, `meta_alfabetizacao_municipio`, `ts_aluno`, `ts_municipio` e `ts_estado`.
 
-## 💰 FinOps – Otimização de Custos
+A **silver** corrige os tipos, padroniza a coluna `rede`, limpa textos, trata duplicidades e chaves nulas, valida a consistência (incluindo comparações entre fontes) e, principalmente, integra as bases. Além das oito tabelas tratadas, gera `indicador_municipio_integrado`, `indicador_uf_integrado`, `tratamento_silver` e `validacao_silver`.
 
-Boas práticas de eficiência no uso da nuvem:
+A **gold** entrega sete datasets prontos para consumo: `indicadores_municipio`, `metas_vs_resultados_municipio`, `metas_vs_resultados_uf`, `evolucao_temporal_municipio`, `agregacoes_uf`, `metricas_brasil` e `features_ml`.
 
-- Uso eficiente de armazenamento (**Parquet**, particionamento);
-- Otimização de queries;
-- Controle de recursos computacionais;
-- Estimativa de custo da arquitetura.
+A integração acontece na silver, juntando três fontes na mesma granularidade. A `indicador_municipio_integrado` combina taxa e média por município (Base dos Dados), as metas de 2024 a 2030 (Base dos Dados) e a distribuição por nível (`nivel_0..8`) vinda do `ts_municipio` (microdados do INEP), derivando `codigo_uf` e `gap_meta_2030`. A `indicador_uf_integrado` faz o mesmo por UF, com os níveis do `ts_estado`. Essas duas tabelas alimentam a gold direto, o que deixa os datasets analíticos e as features de ML bem mais simples.
 
----
+## Qualidade de dados
 
-## ☁️ Implementação em Cloud
+O controle de qualidade fica na silver e mistura tratamento ativo com verificação; os resultados ficam registrados em `tratamento_silver` e `validacao_silver`.
 
-A solução é implementada no **Databricks** (plataforma de dados em nuvem), usando
-**Unity Catalog** para organização/governança das tabelas e **Delta Lake** como formato
-de armazenamento das camadas bronze, silver e gold.
+Duplicatas são removidas com `dropDuplicates` sobre as chaves de negócio. Para valores ausentes, linhas com chave de identidade nula saem, mas nulos de métrica ficam (são informativos) e alunos sem município — casos de escolas fora do Censo Escolar 2025 — são mantidos, porque têm identidade válida. Taxas e percentuais são checados no intervalo `[0, 100]` e a proficiência dentro de uma faixa plausível. A consistência entre tabelas é testada comparando a taxa da Base dos Dados com o percentual oficial do INEP na mesma chave — na validação local, a diferença média deu zero.
 
----
+## Monitoramento
 
-## 🤖 Aplicação em IA
+A observabilidade se apoia no que o Databricks já oferece: logs de Jobs, métricas de cluster e histórico do Delta. Falhas de ingestão aparecem no status de cada tarefa dos Workflows, com retry e notificação por e-mail. A latência é acompanhada pela duração de cada notebook no histórico do Job. O volume processado sai das tabelas de controle (`tratamento_silver`, `validacao_silver`) e das métricas de escrita do Delta. E os alertas de erro combinam os alertas de Job (falha ou SLA estourado) com as próprias tabelas de validação, que sinalizam registros fora do esperado.
 
-A camada Gold poderá ser usada para:
+## FinOps
 
-- Modelos de predição de alfabetização por município;
-- Análise de desigualdade educacional / clusters de vulnerabilidade;
-- Subsídio a políticas públicas baseadas em dados.
+Algumas decisões seguram o custo sem prejudicar o resultado. As tabelas em Delta/Parquet particionadas por ano reduzem o volume lido em cada query (*partition pruning*), o que corta custo de scan e tempo. O streaming incremental recalcula só as partições afetadas, evitando reprocessar todo o histórico. A integração antecipada na silver deixa a gold mais leve. Os clusters são efêmeros, sobem para o Job e encerram no fim (*auto-terminate*), então não há custo ocioso. E o storage no S3 guarda dados brutos comprimidos e as camadas Delta por um custo baixo por GB.
 
----
+Num contexto acadêmico, com execuções sob demanda, o custo é dominado por poucas horas de cluster por semana e alguns GB no S3. Como ordem de grandeza: storage no S3 fica abaixo de US$ 1/mês; o compute do Databricks (job cluster pequeno, algumas horas no mês) por volta de US$ 5 a 20/mês; transferência e requisições, desprezíveis. No total, algo entre US$ 6 e 21 por mês — valores ilustrativos, que mudam conforme o tipo de instância, a região e a frequência de execução.
 
-## 📁 Estrutura do Repositório
+## Decisões arquiteturais
+
+Batch foi a escolha para a espinha dorsal, porque a carga histórica é naturalmente batch, com o streaming incremental cobrindo as atualizações near-real-time sem manter cluster ligado o tempo todo. Optamos por lakehouse (Delta no S3) em vez de um data warehouse dedicado por causa do custo sob demanda e da flexibilidade de usar SQL e ML na mesma camada, sem infra fixa. No trade-off de custo contra performance, Parquet colunar, particionamento por ano e clusters efêmeros dão bom desempenho de leitura com gasto mínimo. E antecipar a integração para a silver mantém a gold focada em análise, evitando joins caros repetidos nas queries finais.
+
+## Aplicação em IA
+
+A camada gold, em especial a `features_ml`, já foi pensada para servir modelos. Dá para prever se um município vai atingir a meta de 2030 usando taxa, distribuição por nível, metas e `gap_meta_2030` como features, priorizando ação onde o risco é maior. Para análise de desigualdade, é possível agrupar municípios por vulnerabilidade combinando o indicador com fontes externas (IBGE, FUNDEB, Cadastro Único). E, para política pública, a evolução temporal e a comparação entre meta e resultado servem de base para alocar recursos e acompanhar programas.
+
+## Estrutura do repositório
 
 ```
 TechChallenge_2/
-├── data/              # Dados brutos das fontes (comprimidos: .csv.gz / .zip) — versionados
-├── projeto/           # Código e artefatos da pipeline
-│   ├── bronze/        # prep_source.py + 01_bronze_ingestao.ipynb
-│   ├── silver/        # 02_silver_limpeza_validacao.ipynb
-│   ├── gold/          # 03_gold_datasets_analiticos.ipynb
-│   └── docs/          # Documentação técnica e diagramas (arquitetura.md)
-└── README.md          # Documentação da solução
+├── data/                  # Dados brutos das fontes (.csv.gz / .zip) — versionados
+├── projeto/               # Código e artefatos da pipeline
+│   ├── bronze/            # prep_source.py + 01_bronze_ingestao.ipynb
+│   ├── silver/            # 02_silver_limpeza_validacao.ipynb
+│   ├── gold/              # 03_gold_datasets_analiticos.ipynb
+│   └── docs/              # Documentação técnica e diagramas (arquitetura.md)
+├── scripts/               # Scripts auxiliares
+├── JOB_PIPELINE.md        # Configuração do Job / orquestração no Databricks
+├── WORKFLOW.md            # Fluxo de trabalho do time (Git, branches, PRs)
+└── README.md
 ```
 
-> Fluxo de execução: `prep_source.py` prepara os arquivos em uma pasta `source/` (não
-> versionada), que é enviada ao workspace do Databricks; então os notebooks bronze, silver e
-> gold são executados em ordem. Dados derivados/intermediários (`source/`, `lake/`) ficam fora
-> do Git — apenas as fontes originais em [`data/`](data/) são versionadas.
+O `prep_source.py` prepara os arquivos numa pasta `source/` (fora do Git), que vai para o workspace ou landing; depois os notebooks rodam em ordem. Dados derivados (`source/`, `lake/`) não são versionados — só as fontes originais em `data/`.
 
----
+## Tecnologias
 
-## 🚀 Tecnologias
+Databricks na AWS pelo ambiente gerenciado de Spark, com notebooks, catálogo e computação sob demanda. Amazon S3 como data lake escalável e barato. Delta Lake pelo suporte transacional (ACID) sobre Parquet, com versionamento e desempenho. Unity Catalog para organizar as tabelas por schema (bronze/silver/gold) e cuidar do acesso. PySpark para dar conta dos microdados de aluno, que têm milhões de linhas. Parquet com particionamento por ano pela leitura colunar e economia no scan. E os Databricks Workflows para orquestrar os notebooks e os gatilhos, incluindo o *file arrival trigger*.
 
-- **Databricks** — ambiente gerenciado de Spark com notebooks e computação sob demanda.
-- **Delta Lake** — formato transacional (ACID) sobre Parquet para as tabelas do medalhão.
-- **Unity Catalog** — organização das tabelas por schema (`bronze`/`silver`/`gold`).
-- **PySpark** — processamento distribuído (lida com os microdados de aluno, milhões de linhas).
-- **Parquet + particionamento por ano** — leitura colunar e redução de custo de scan (FinOps).
+## Git
 
-As justificativas de cada escolha estão em
-[`projeto/docs/arquitetura.md`](projeto/docs/arquitetura.md#7-tecnologias-e-justificativas).
+O desenvolvimento segue commits descritivos, branches por funcionalidade e integração via Pull Requests na branch principal. O fluxo do time está em [WORKFLOW.md](WORKFLOW.md).
 
----
-
-## 👥 Equipe
+## Equipe
 
 | Integrante | Contato |
-|------------|---------|
+|---|---|
 | Isabelle Nicole Santana de Brito | isabelle_nicole@outlook.com |
 | Filipe Noberto Justino | justinofilipe03@hotmail.com |
 | Leandro Rebes Camargo | leandrorcamargo@hotmail.com |
 | Felipe Vieira Sanches | fvieirasanches@gmail.com |
 
----
+## Vídeo executivo
 
-## 📹 Vídeo Executivo
-
-> _Link a ser adicionado (apresentação executiva de até 5 minutos)._
+Apresentação de até 5 minutos cobrindo o problema de negócio, a arquitetura, o valor da pipeline e o potencial de uso em IA: https://drive.google.com/file/d/1AId5YoI50XOTlVGVHedo2clFWsKWcldw/view
